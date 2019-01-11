@@ -83,7 +83,7 @@ python main.py
 
 
 ## Docker 使用
-**1. 将配置文件下载到本地**
+**1. 将配置文件下载到本地***
 ```bash
 docker run --rm pjialin/py12306 cat /config/env.py > env.py
 # 或
