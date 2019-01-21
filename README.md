@@ -41,7 +41,7 @@ cp env.py.example env.py
 
 语音通知
 
-语音验证码使用的是阿里云 API 市场上的一个服务商，需要到 [https://market.aliyun.com/products/57126001/cmapi019902.html](https://market.aliyun.com/products/57126001/cmapi019902.html) 购买后将 appcode 填写到配置中
+语音验证码使用的是阿里云 API 市场上的一个服务商，需要到 [https://market.aliyun.com/products/56928004/cmapi026600.html](https://market.aliyun.com/products/56928004/cmapi026600.html) 购买后将 appcode 填写到配置中
 
 **3. 启动前测试**
 
@@ -121,7 +121,8 @@ docker run --rm --name py12306 -p 8008:8008 -d -v $(pwd):/config -v py12306:/dat
     - 新增 钉钉通知
     - 新增 Telegram 通知
     - 新增 ServerChan 和 PushBear 微信推送
-
+- 19-01-18
+    - 新增 CDN 查询
 
 ## 截图
 ### Web 管理页面

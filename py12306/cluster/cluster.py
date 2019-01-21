@@ -27,6 +27,9 @@ class Cluster():
     KEY_USER_LAST_HEARTBEAT = KEY_PREFIX + 'user_last_heartbeat'
     KEY_NODES_ALIVE = KEY_PREFIX + 'nodes_alive'
 
+    KEY_CDN_AVAILABLE_ITEMS = KEY_PREFIX + 'cdn_available_items'
+    KEY_CDN_LAST_CHECK_AT = KEY_PREFIX + 'cdn_last_check_at'
+
     # 锁
     KEY_LOCK_INIT_USER = KEY_PREFIX + 'lock_init_user'  # 暂未使用
     KEY_LOCK_DO_ORDER = KEY_PREFIX + 'lock_do_order'  # 订单锁
@@ -199,7 +202,12 @@ class Cluster():
 
     def subscribe(self):
         while True:
-            message = self.pubsub.get_message()
+            try:
+                message = self.pubsub.get_message()
+            except RuntimeError as err:
+                if 'args' in dir(err) and err.args[0].find('pubsub connection not set') >= 0:  # 失去重连
+                    self.pubsub.subscribe(self.KEY_CHANNEL_LOG, self.KEY_CHANNEL_EVENT)
+                    continue
             if message:
                 if message.get('type') == 'message' and message.get('channel') == self.KEY_CHANNEL_LOG and message.get(
                         'data'):
