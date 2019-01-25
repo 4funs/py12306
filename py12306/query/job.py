@@ -44,6 +44,7 @@ class Job:
     retry_time = 3
 
     interval = {}
+    interval_additional = 0
 
     query = None
     cluster = None
@@ -103,11 +104,9 @@ class Job:
                 self.refresh_station(station)
                 for date in self.left_dates:
                     self.left_date = date
-                    tmp_start_time = time.time()
                     response = self.query_by_date(date)
-                    tmp_end_time = time.time()  # 耗时
                     self.handle_response(response)
-                    QueryLog.add_query_time_log(tmp_start_time, tmp_end_time, is_cdn=self.is_cdn)
+                    QueryLog.add_query_time_log(time=response.elapsed.total_seconds(), is_cdn=self.is_cdn)
                     if not self.is_alive: return
                     self.safe_stay()
                     if is_main_thread():
@@ -132,9 +131,9 @@ class Job:
                                              arrive_station=self.arrive_station_code, type='leftTicket/queryZ')
         if Config.is_cdn_enabled() and Cdn().is_ready:
             self.is_cdn = True
-            return self.query.session.cdn_request(url, timeout=self.query_time_out)
+            return self.query.session.cdn_request(url, timeout=self.query_time_out, allow_redirects=False)
         self.is_cdn = False
-        return self.query.session.get(url, timeout=self.query_time_out)
+        return self.query.session.get(url, timeout=self.query_time_out, allow_redirects=False)
 
     def handle_response(self, response):
         """
@@ -225,6 +224,12 @@ class Job:
         """
         if response.status_code != 200:
             QueryLog.print_query_error(response.reason, response.status_code)
+            if self.interval_additional:
+                self.interval_additional += self.interval_additional
+            else:
+                self.interval_additional = self.interval.get('min')
+        else:
+            self.interval_additional = 0
         result = response.json().get('data.result')
         return result if result else False
 
@@ -258,8 +263,10 @@ class Job:
         Query().jobs.pop(index)
 
     def safe_stay(self):
-        interval = get_interval_num(self.interval)
-        QueryLog.add_stay_log(interval)
+        origin_interval = get_interval_num(self.interval)
+        interval = origin_interval + self.interval_additional
+        QueryLog.add_stay_log(
+            '%s + %s' % (origin_interval, self.interval_additional) if self.interval_additional else origin_interval)
         stay_second(interval)
 
     def set_passengers(self, passengers):
